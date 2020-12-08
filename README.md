@@ -11,7 +11,11 @@ Link: [pariaspe/openrave-playground](https://github.com/pariaspe/openrave-playgr
 - [2. Estructura de Carpetas](#2-estructura-de-carpetas)
 - [3. Base](#3-base)
 - [4. Extras](#4-extras)
-    - [4.1. Extra 1](#extra-1-prueba)
+    - [4.1. Extra 1](#extra-1-video-parte-base)
+    - [4.2. Extra 2](#extra-1-ecrowrapper)
+    - [4.3. Extra 3](#extra-1-integracion-con-a)
+    - [4.4. Extra 4](#extra-1-inflated-maps)
+    - [4.5. Extra 5](#extra-1-video-parte-extra)
 
 ---
 
@@ -19,15 +23,32 @@ Link: [pariaspe/openrave-playground](https://github.com/pariaspe/openrave-playgr
 Para la práctica se han realizado los siguientes hitos:
 
 - **Base**:
-    1. TODO
+    1. Se presenta un script de python que controla al robot para que alcance la meta sobre un mapa sencillo (map1).
     
 - **Extra**:
-    1. Prueba: TODO
+    1. Se presenta un **vídeo** que muestra la ejecución de la parte base.
+    2. Se presenta una pequeña **API** que permite abstraerse a la hora de controlar el robot. Incluye un control en posición bloqueante.
+    3. Integración de un **planificador A\*** que calcula la ruta a seguir por el robot para alcanzar su objetivo.
+    4. **Inflado del mapa**: Experimentalmente se ha comprobado que debido al volumen del robot muchas veces no se puede seguir la ruta generada por el planificador. Se ha desarrollado una solución que aumenta el tamaño de los obstáculos en el planificador para generar una ruta viable.
+    5. Se presenta un **vídeo** que muestra la ejecución de la parte extra.
 
 ## 2. Estructura de carpetas
 El esquema de organización del repositorio es el siguiente:
 ```
 .
++-- doc (imgs..)
++-- tools
+    +-- assets
+        +-- map1.csv
+    +-- ecro (ecro model)
+    +-- openrave-map-from-csv.py
+    +-- astar.py
+    +-- utils.py
+    +-- map.env.xml
+    +-- map.kinbody.xml
++-- base.py
++-- extra.py
++-- README.md
 ```
 
 ## 3. Base
@@ -208,38 +229,47 @@ El segundo extra ofrece una capa de abstracción sobre el robot `ecro`. Esta cap
 
 ```python
 class EcroWrapper:
+    """Wrapper that gathers utils to operate with Ecro robot."""
     def __init__(self, env, ecro):
+        """Inits robot and controllers."""
         self.robot = ecro
         self.robot.SetController(RaveCreateController(env,'idealvelocitycontroller'),range(self.robot.GetDOF()),0)
         self.control = self.robot.GetController()
 
     def get_pos(self):
+        """Gets the pose of the robot in X Y Z coords."""
         H_0_robot = self.robot.GetTransform()
         return np.round(H_0_robot[:3, -1,].T, 2)
 
     def get_rot(self):
+        """Gets the rotation matrix of the robot."""
         H_0_robot = self.robot.GetTransform()
         return H_0_robot[:3, :3]
 
     def get_angles(self):
+        """Gets the angular pose of the robot. Roll Pitch Yaw. In radians."""
         return np.round(axisAngleFromRotationMatrix(self.get_rot()), 3)
 
     def get_heading(self):
+        """Gets the heading (yaw) of the robot in radians."""
         return self.get_angles()[-1]
 
     def set_linear_vel(self, vel):
+        """Sets a linear vel to move forward. Vel might be satured if the max vel is exceeded."""
         if vel > MAX_VEL:
             vel = MAX_VEL
         self.control.SetDesired(4*[vel])
 
     def set_angular_vel(self, vel):
+        """Sets an angular vel to rotate. Vel might be satured if the max vel is exceeded."""
         if vel > MAX_VEL:
             vel = MAX_VEL
         self.control.SetDesired([vel, -vel, vel, -vel])
 
-    def set_cmd_pos(self, pos, block=False):
+    def set_cmd_pos(self, pos, block=True):
+        """Sets a pose that the robot tries to reach. This method blockes the execution flow until the pose is reached."""
         if block:
-            print("\nHEADING TO ({0}, {1})".format(str(pos[0]), str(pos[1])))
+            print("\nHEADING TO ({0}, {1})".format(str(pos[0]), str(pos[1])))  # Heads up to goal
             dif = 1  # init value, just to enter in while
             while abs(dif) > ANG_TOL:
                 x, y, _ = self.get_pos()
@@ -250,11 +280,11 @@ class EcroWrapper:
                 goal_heading = atan2(dy, dx)
 
                 dif = self.get_heading() - goal_heading
-                self.set_angular_vel(dif*4)
+                self.set_angular_vel(dif*4)  # move faster 
 
                 time.sleep(1/RATE)
 
-            print("GOING TO ({0}, {1})".format(str(pos[0]), str(pos[1])))
+            print("GOING TO ({0}, {1})".format(str(pos[0]), str(pos[1])))  # Move forward to reach goal.
             dist = 1
             while abs(dist) > LIN_TOL:
                 x, y, _ = self.get_pos()
@@ -262,7 +292,7 @@ class EcroWrapper:
                 dx = pos[0] - x
                 dy = pos[1] - y
                 dist = sqrt(dx**2 + dy**2)
-                self.set_linear_vel(dist*4)
+                self.set_linear_vel(dist*4)  # move faster
 
                 time.sleep(1/RATE)
 
@@ -271,9 +301,9 @@ class EcroWrapper:
             pass
 ```
 
-Entre las acciones que recoge el `Wrapper` esta el acceso a información del robot como la posición o la orientación, un control en velocidad (tanto lineal como angular) y un control en posición bloqueante.
+Entre las acciones que recoge el `Wrapper` esta el acceso a información del robot como la posición o la orientación, un control en velocidad (tanto lineal como angular) y un control en posición bloqueante. Como una posible vía de desarrollo futuro se valora la creación de un control en posición no bloqueante u otro tipo de controles.
 
-### Extra 3:
+### Extra 3: Integración con a\*
 El tercer extra incluye la integración de un planificador de movimientos A\*. El planificador que se utiliza es el realizado para la asignatura de *Introducción a la Planificación de Robots* [1](https://github.com/pariaspe/graph-searching/tree/main/extra/astar). Los archivos necesarios se copían a este repositorio para evitar dependencias. El código es exactamente el mismo salvo por unas constantes de ruta que se modifican para poder encontrar el mapa utilizado.
 
 El plafinicador se ejecuta en un proceso a parte y su salida se parsea para extraer la ruta a seguir. Previo a su ejecución, la ruta se optimiza levemente para reducir el numero de órdenes a enviar al robot.
@@ -296,7 +326,7 @@ def get_route(map, start, end):
         steps.insert(0, [int(l[13]), int(l[19])])
     return optimize_route(steps)
 ```
-En la línea 2 de cógido, se puede observar como el mapa se *infla* antes de calcular la ruta. Esto se explica en el siguiente apartado.
+En la línea 2 de cógido, se puede observar como el mapa se *infla* antes de calcular la ruta. Esto se explica en el siguiente apartado. Como una posible mejora se ha valorado suavizar la trayectoria para generar un movimiento *más natural*.
 
 ### Extra 4: Inflated maps
 El cuarto extra agranda (*infla*) los obstaculos del mapa para simular el volumen del robot. Esto es necesario para que la ruta que calcule el planificador sea realizable por el robot. Los aspectos del código se pueden observar los métodos `inflate_map` y `inflate_squares` de `extra.py`. A modo ilustrativo, se muestra el mapa *inflado* que se ha utilizado.

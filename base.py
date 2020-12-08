@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-"""Descripcion
-"""
 
 from openravepy import *
 import time
