@@ -11,11 +11,11 @@ Link: [pariaspe/openrave-playground](https://github.com/pariaspe/openrave-playgr
 - [2. Estructura de Carpetas](#2-estructura-de-carpetas)
 - [3. Base](#3-base)
 - [4. Extras](#4-extras)
-    - [4.1. Extra 1](#extra-1-video-parte-base)
-    - [4.2. Extra 2](#extra-1-ecrowrapper)
-    - [4.3. Extra 3](#extra-1-integracion-con-a)
-    - [4.4. Extra 4](#extra-1-inflated-maps)
-    - [4.5. Extra 5](#extra-1-video-parte-extra)
+    - [4.1. Extra 1](#extra-1-vídeo-parte-base)
+    - [4.2. Extra 2](#extra-2-ecrowrapper)
+    - [4.3. Extra 3](#extra-3-integración-con-a)
+    - [4.4. Extra 4](#extra-4-inflated-maps)
+    - [4.5. Extra 5](#extra-5-vídeo-parte-extra)
 
 ---
 
@@ -221,7 +221,7 @@ finally:
 
 Se muestra en vídeo el resultado de la ejecución de la parte base.
 
- [![OpenRAVE Base](http://img.youtube.com/vi/cw2RJPpvA7c/0.jpg)](http://www.youtube.com/watch?v=cw2RJPpvA7c)
+[![OpenRAVE Base](http://img.youtube.com/vi/j-N7YpmrsZ4/0.jpg)](http://www.youtube.com/watch?v=j-N7YpmrsZ4)
 
 ### Extra 2: EcroWrapper
 
@@ -348,4 +348,5 @@ El cuarto extra agranda (*infla*) los obstaculos del mapa para simular el volume
 ### Extra 5: Vídeo parte extra
 Se muestra en vídeo el resultado de la ejecución de la parte extra.
 
- [![OpenRAVE Extra](http://img.youtube.com/vi/cw2RJPpvA7c/0.jpg)](http://www.youtube.com/watch?v=cw2RJPpvA7c)
+ [![OpenRAVE Extra](http://img.youtube.com/vi/JB0May1HuR0/0.jpg)](http://www.youtube.com/watch?v=JB0May1HuR0)
+ 
